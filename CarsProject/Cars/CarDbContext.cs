@@ -1,0 +1,25 @@
+﻿namespace Cars.Data
+{
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Configuration;
+
+    namespace PostgreSQL.Data
+    {
+        public class CarDbContext : DbContext
+        {
+            protected readonly IConfiguration Configuration;
+
+            public CarDbContext(IConfiguration configuration)
+            {
+                Configuration = configuration;
+            }
+
+            protected override void OnConfiguring(DbContextOptionsBuilder options)
+            {
+                options.UseNpgsql(Configuration.GetConnectionString("WebApiDatabase"));
+            }
+
+            public DbSet<Car> Cars { get; set; }
+        }
+    }
+}
