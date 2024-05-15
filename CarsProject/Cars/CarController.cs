@@ -1,4 +1,6 @@
 ﻿using Cars.Data.PostgreSQL.Data;
+using CarsProject.Cars;
+using CarsProject.Cars.CarService;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
@@ -15,26 +17,26 @@ namespace Cars.Cars
     public class CarController : ControllerBase
     {
         
-        private readonly CarService _carService;
+        private readonly ICarService _carService;
         private readonly IDistributedCache _cache;
 
-        public CarController(CarService carService, IDistributedCache cache)
+        public CarController(ICarService carService, IDistributedCache cache)
         {
             this._carService = carService;
             this._cache = cache;
         }
 
-        public CarController(CarService @object)
-        {
-        }
+        //public CarController(CarService @object)
+        //{
+        //}
 
         [HttpPost]
-        public IActionResult insertNewCar([FromBody] Car car)
+        public IActionResult insertNewCar([FromBody] CarDTO carDTO)
         {
             try
             {
-                var result = this._carService.createNewInspection(car);
-                return Ok(result);
+                _carService.createNewInspection(carDTO);
+                return Ok(carDTO);
             }
             catch (Exception ex)
             {
@@ -45,7 +47,7 @@ namespace Cars.Cars
         [HttpDelete("{id}")]
         public IActionResult deleteCarById(int id)
         {
-            var CarToDelete = _carService.GetCarById(id);
+            var CarToDelete = _carService.getCarById(id).ToDomainModel();
 
             if (CarToDelete == null)
             {
@@ -60,14 +62,14 @@ namespace Cars.Cars
         {
             try
             {
-                Car car = _carService.GetCarById(id);
+                CarDTO car = _carService.getCarById(id);
 
                 if (car == null)
                 {
                     return NotFound(); 
                 }
-
-                return Ok(car); 
+                var result = car;
+                return Ok(result); 
             }
             catch (Exception ex)
             {
@@ -82,20 +84,16 @@ namespace Cars.Cars
             try
             {
                 var cacheKey = "AllCars";
-                IEnumerable<Car> cars;
+                IEnumerable<CarDTO> cars;
 
                 var cachedData = _cache.GetString(cacheKey);
                 if (!string.IsNullOrEmpty(cachedData))
                 {
-                    cars = JsonConvert.DeserializeObject<IEnumerable<Car>>(cachedData,
-                        new JsonSerializerSettings
-                        {
-                            ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
-                        });
+                    cars = JsonConvert.DeserializeObject<IEnumerable<CarDTO>>(cachedData);
                 }
                 else
                 {
-                     cars = _carService.GetAllCars();
+                     cars = _carService.getAllCars();
 
                     _cache.SetString(cacheKey, JsonConvert.SerializeObject(cars), new DistributedCacheEntryOptions
                     {
@@ -132,13 +130,13 @@ namespace Cars.Cars
         }
 
         [HttpPut]
-        public IActionResult UpdateCar( [FromBody] Car updatedCar)
+        public IActionResult UpdateCar( [FromBody] CarDTO updatedCar)
         {
             try
             {
-               int updatedCarResult = _carService.UpdateCar(updatedCar);
+                int updatedCarResult = _carService.updateCar(updatedCar);
 
-                if (updatedCarResult == 1)
+                if (updatedCarResult == 0)
                 {
                     return NotFound();
                 }

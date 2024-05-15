@@ -1,13 +1,19 @@
-using Cars.Cars;
 using Cars.Data.PostgreSQL.Data;
+using CarsProject.Cars.CarRepositry;
+using CarsProject.Cars.CarService;
 using FluentAssertions.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
 //builder.Services.AddScoped<, CarDbContext>();
-builder.Services.AddScoped<CarService>();
+//builder.Services.AddScoped<ICarService>();
+//builder.Services.AddScoped<ICarRepositry>();
+
+builder.Services.AddScoped(typeof(ICarService), typeof(CarService));
+builder.Services.AddScoped(typeof(ICarRepositry), typeof(CarRepositry));
 
 builder.Services.AddDbContext<CarDbContext>(options =>options.UseNpgsql(
     builder.Configuration.GetConnectionString("WebApiDatabase")));
